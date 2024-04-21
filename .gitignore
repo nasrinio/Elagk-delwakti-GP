@@ -1,0 +1,5 @@
+/config/config.env
+/DB/Models/ZZZDraft.model.js
+/src/utils/coludinaryConfigrations.js
+/src/utils/firebase.js
+node_modules
