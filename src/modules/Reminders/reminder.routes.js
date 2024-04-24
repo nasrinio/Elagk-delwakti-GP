@@ -7,6 +7,7 @@ import { asyncHandler } from "../../utils/errorhandling.js";
 import { isAuth } from "../../middlewares/auth.js";
 
 
+
 router.post(
   "/",
   isAuth(),
@@ -20,6 +21,11 @@ router.post(
   //validationCoreFunction(createReminderSchema),
   asyncHandler(rc.searchReminders)
 );
+router.post(
+  "/adherenceReport",
+  isAuth(),
+  asyncHandler(rc.medicationAdherenceReport)
+);
 
 router.delete(
   "/",
@@ -30,5 +36,6 @@ router.delete(
 router.post("/update", isAuth(), asyncHandler(rc.updateReminder));
 router.get("/", isAuth(), asyncHandler(rc.getAllReminders));
 
+  
 
 export default router;
