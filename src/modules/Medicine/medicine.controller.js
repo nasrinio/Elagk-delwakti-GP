@@ -71,5 +71,13 @@ export const searchMedicineByName = async (req, res, next) => {
   }
 };
 
-
-// // TODO: update and delete brand , get all brands with products
+//======================== getAllMedicines =======================
+export const getAllMedicines = async (req, res, next) => {
+  try {
+    const medicines = await medicineModel.find();
+    res.status(200).json({ message: "Medicines found", medicines });
+  } catch (error) {
+    console.error("Error getting all medicines:", error);
+    next(new Error("Failed to get all medicines", { cause: 500 }));
+  }
+}
