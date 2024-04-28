@@ -27,7 +27,7 @@ router.post(
 //   validationCoreFunction(validators.updateCategorySchema),
 //   asyncHandler(cc.update),
 // )
-router.get('/', asyncHandler(pc.findPharmacies))
+router.post('/findPharmacies', asyncHandler(pc.findPharmacies))
 
 router.get('/getAllPharmacies', asyncHandler(pc.getAllPharmacies))
 
