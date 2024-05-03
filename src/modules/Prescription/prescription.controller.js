@@ -23,11 +23,11 @@ export const createPrescription = async (req, res, next) => {
     req.file.path,
     { folder: `${process.env.PROJECT_FOLDER}/Prescriptions/${nanoid()}` }
   );
-  
+
   const text = await performOCR(secure_url);
   if (!text) {
     text = "failed to extract text";
-   // return next(new Error("Failed to perform OCR", { cause: 402 }));
+    // return next(new Error("Failed to perform OCR", { cause: 402 }));
   }
   const prescription = await prescriptionModel.create({
     createDate,
@@ -99,5 +99,98 @@ export const getAllMedicineNames = async (req, res, next) => {
   } catch (error) {
     // If an error occurs, pass it to the error handling middleware
     next(error);
+  }
+};
+// ================= Prescription Required Medicines =================
+
+// export const prescriptionRequiredMedicines = async (req, res, next) => {
+//   try {
+//     const userId = req.authUser._id;
+
+//     // Find all prescriptions for the given user ID
+//     const prescriptions = await prescriptionModel.find({ patientId: userId });
+
+//     if (!prescriptions || prescriptions.length === 0) {
+//       return res.status(404).json({ message: "No prescriptions found for the user" });
+//     }
+
+//     // Initialize an array to store prescription IDs with prescriptionRequired flag
+//     const prescriptionIds = [];
+
+//     // Initialize an array to store unique medicine names
+//     const uniqueMedicineNames = [];
+
+//     // Loop through each prescription
+//     for (const prescription of prescriptions) {
+//       // Find the medicine details for the prescription
+//       const medicine = await medicineModel.findById(prescription.medicineId);
+
+//       if (medicine && medicine.prescriptionRequired) {
+//         // Add prescription ID to the array if prescriptionRequired is true
+//         prescriptionIds.push(prescription._id);
+
+//         // Add unique medicine names to the array
+//         if (!uniqueMedicineNames.includes(medicine.medicineName)) {
+//           uniqueMedicineNames.push(medicine.medicineName);
+//         }
+//       }
+//     }
+
+//     res.status(200).json({ message: "Prescription IDs with prescriptionRequired flag", prescriptionIds, uniqueMedicineNames });
+//   } catch (error) {
+//     console.error("Error detecting prescriptionRequired medicines:", error);
+//     next(new Error("Failed to detect prescriptionRequired medicines", { cause: 500 }));
+//   }
+// };
+
+
+export const prescriptionRequiredMedicines = async (req, res, next) => {
+  try {
+    const userId = req.authUser._id;
+
+    // Find all prescriptions for the given user ID
+    const prescriptions = await prescriptionModel.find({ patientId: userId });
+
+    if (!prescriptions || prescriptions.length === 0) {
+      return res.status(404).json({ message: "No prescriptions found for the user" });
+    }
+
+    // Initialize an array to store prescription IDs with prescriptionRequired flag
+    const prescriptionIds = [];
+
+    // Initialize an array to store unique medicine names with prescriptionRequired = true
+    const medicineArr = [];
+
+    // Loop through each prescription
+    for (const prescription of prescriptions) {
+      // Find the medicine details for the prescription
+      const medicine = await medicineModel.findById(prescription.medicineId);
+
+      if (medicine && medicine.prescriptionRequired) {
+        // Add prescription ID to the array if prescriptionRequired is true
+        prescriptionIds.push(prescription._id);
+
+        // Check if the medicine name is already in the Medicines array
+        const existingMedicineIndex = medicineArr.findIndex(
+          (item) => item.medicineName === medicine.medicineName
+        );
+
+        if (existingMedicineIndex === -1) {
+          // Add the medicine data to the Medicines array
+          medicineArr.push({
+            medicineName: medicine.medicineName,
+            prescriptionRequired : medicine.prescriptionRequired,
+            activeIngredient : medicine.activeIngredient,
+            usageInstruction : medicine.usageInstruction, 
+            concentration : medicine.concentration,
+          });
+        }
+      }
+    }
+
+    res.status(200).json({ message: "Prescription IDs with prescriptionRequired flag", prescriptionIds, medicineArr });
+  } catch (error) {
+    console.error("Error detecting prescriptionRequired medicines:", error);
+    next(new Error("Failed to detect prescriptionRequired medicines", { cause: 500 }));
   }
 };
