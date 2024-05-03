@@ -226,6 +226,7 @@ export const searchReminders = async (req, res, next) => {
   }
 };
 
+// !! REPORTS !! 
 //================================== generate medication adherence report ==========================
 export const medicationAdherenceReport = async (req, res, next) => {
   try {
@@ -266,3 +267,49 @@ export const medicationAdherenceReport = async (req, res, next) => {
   }
 };
 
+
+//================================== determine reminder medicines ==========================
+export const determineReminderMedicines = async (req, res, next) => {
+  try {
+    const userId = req.authUser._id;
+
+    // Find all prescriptions for the given user ID
+    const prescriptions = await prescriptionModel.find({ patientId: userId });
+
+    if (!prescriptions || prescriptions.length === 0) {
+      return next(new Error("No prescriptions found for the user.", { cause: 404 }));
+    }
+
+    // Initialize arrays for storing reminder medicines and non-reminder medicines
+    let reminderMedicines = [];
+    let nonReminderMedicines = [];
+
+    // Loop through each prescription
+    for (const prescription of prescriptions) {
+      // Find the corresponding reminder for the prescription
+      const reminder = await reminderModel.findOne({ prescriptionId: prescription._id });
+
+      // Check if a reminder exists for the prescription
+      if (reminder) {
+        reminderMedicines.push({
+          prescriptionId: prescription._id,
+          medicineId: prescription.medicineId,
+          isReminder: true,
+        });
+      } else {
+        nonReminderMedicines.push({
+          prescriptionId: prescription._id,
+          medicineId: prescription.medicineId,
+          isReminder: false,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      reminderMedicines,
+      nonReminderMedicines,
+    });
+  } catch (error) {
+    return next(new Error(`Error determining reminder medicines: ${error.message}`));
+  }
+};

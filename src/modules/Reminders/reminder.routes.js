@@ -27,6 +27,11 @@ router.post(
   asyncHandler(rc.medicationAdherenceReport)
 );
 
+router.post(
+  "/whichRemind",
+  isAuth(),
+  asyncHandler(rc.determineReminderMedicines)
+);
 router.delete(
   "/",
   isAuth(),
@@ -39,3 +44,4 @@ router.get("/", isAuth(), asyncHandler(rc.getAllReminders));
   
 
 export default router;
+//determineReminderMedicines
