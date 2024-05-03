@@ -12,6 +12,8 @@ router.post(
   asyncHandler(mc.addMedicine)
 );
 router.post("/search", asyncHandler(mc.searchMedicineByName));
+router.post("/medicineAlternatives", asyncHandler(mc.getMedicineAlternatives));
+
 router.get("/", asyncHandler(mc.getAllMedicines));
 
 export default router;

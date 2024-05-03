@@ -81,3 +81,31 @@ export const getAllMedicines = async (req, res, next) => {
     next(new Error("Failed to get all medicines", { cause: 500 }));
   }
 }
+//================= medicine alternatives ======================
+
+
+export const getMedicineAlternatives = async (req, res, next) => {
+  try {
+    const { medicineId } = req.query;
+
+    // Find the medicine by its ID
+    const medicine = await medicineModel.findById(medicineId);
+
+    if (!medicine) {
+      return next(new Error("Medicine not found", { cause: 404 }));
+    }
+
+    // Find alternative medicines based on the same category
+    const alternatives = await medicineModel.find({
+      categoryId: medicine.categoryId,
+      _id: { $ne: medicineId }, // Exclude the input medicine from alternatives
+    });
+
+    const alternativeCount = alternatives.length; // Calculate the number of alternatives
+
+    res.status(200).json({ message: "Alternatives found", alternativeCount, alternatives });
+  } catch (error) {
+    console.error("Error getting medicine alternatives:", error);
+    next(new Error("Failed to get medicine alternatives", { cause: 500 }));
+  }
+};
