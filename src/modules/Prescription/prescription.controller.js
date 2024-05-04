@@ -183,6 +183,7 @@ export const prescriptionRequiredMedicines = async (req, res, next) => {
             activeIngredient : medicine.activeIngredient,
             usageInstruction : medicine.usageInstruction, 
             concentration : medicine.concentration,
+            sideEffects : medicine.sideEffects
           });
         }
       }
