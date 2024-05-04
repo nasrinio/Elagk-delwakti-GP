@@ -289,17 +289,22 @@ export const determineReminderMedicines = async (req, res, next) => {
       // Find the corresponding reminder for the prescription
       const reminder = await reminderModel.findOne({ prescriptionId: prescription._id });
 
+      // Find the medicine details for the prescription
+      const medicine = await medicineModel.findById(prescription.medicineId);
+
       // Check if a reminder exists for the prescription
       if (reminder) {
         reminderMedicines.push({
           prescriptionId: prescription._id,
           medicineId: prescription.medicineId,
+          medicineName: medicine ? medicine.medicineName : "Unknown",
           isReminder: true,
         });
       } else {
         nonReminderMedicines.push({
           prescriptionId: prescription._id,
           medicineId: prescription.medicineId,
+          medicineName: medicine ? medicine.medicineName : "Unknown",
           isReminder: false,
         });
       }
