@@ -26,12 +26,12 @@ export const createReminder = async (req, res, next) => {
   }
 
   // Convert startDate from ISO format to "DD/MM/YYYY" format
-  const formattedStartDate = convertDate(startDate);
+  //const formattedStartDate = convertDate(startDate);
 
   // Create the reminder using the fetched prescription and other data
   const reminder = await reminderModel.create({
     reminderMsg,
-    startDate: formattedStartDate,
+    startDate,
     prescriptionId: prescription._id,
     medicineId,
     isTaken: false,

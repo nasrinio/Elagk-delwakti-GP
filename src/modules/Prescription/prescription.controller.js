@@ -1,11 +1,11 @@
 // import slugify from 'slugify'
-import { customAlphabet } from "nanoid";
 import cloudinary from "../../utils/coludinaryConfigrations.js";
-const nanoid = customAlphabet("123456_=!ascbhdtel", 5);
 import { userModel } from "../../../DB/Models/user.model.js";
 import { prescriptionModel } from "../../../DB/Models/prescription.js";
 import { medicineModel } from "../../../DB/Models/medicine.model.js";
 import { performOCR } from "../../utils/tesseract.js";
+import { customAlphabet } from "nanoid";
+const nanoid = customAlphabet("123456_=!ascbhdtel", 5);
 
 //============================= create prescription =============================================
 export const createPrescription = async (req, res, next) => {
@@ -44,21 +44,33 @@ export const createPrescription = async (req, res, next) => {
   res.status(200).json({ message: "Added Done", prescription });
 };
 
-// export const deletePrescription = async (req, res, next) => {
-//   const { prescriptionId } = req.query;
-//   try {
-//     const prescription = await prescriptionModel.findByIdAndDelete(prescriptionId);
-//     if (!prescription) {
-//       return next(new Error("invalid prescriptionId", { cause: 400 }));
-//     }
-//     res.status(200).json({ message: "deleted Done", prescription });
-//   } catch (error) {
-//     next(error);
-//   }
+//============================= delete prescription =============================================
+export const deletePrescription = async (req, res, next) => {
+  const { prescriptionId } = req.query;
+  const userId = req.authUser._id;
 
-// }
+  // Find the prescription by its ID
+  const prescription = await prescriptionModel.findById(prescriptionId);
 
-// Assuming this is where you retrieve prescriptions for the logged-in user
+  // Check if the prescription exists
+  if (!prescription) {
+    return res.status(404).json({ message: "Prescription not found" });
+  }
+
+  // Check if the prescription belongs to the logged-in user
+  if (prescription.patientId.toString() !== userId.toString()) {
+    return res
+      .status(403)
+      .json({ message: "You are not authorized to delete this prescription" });
+  }
+
+  // Delete the prescription
+  await prescriptionModel.findByIdAndRemove(prescriptionId);
+
+  res.status(200).json({ message: "Prescription deleted successfully" });
+};
+
+//============================= get all prescription =============================================
 export const getAllPrescriptions = async (req, res, next) => {
   // Retrieve the logged-in user's ID
   const userId = req.authUser._id;
@@ -77,73 +89,27 @@ export const getAllPrescriptions = async (req, res, next) => {
   }
 };
 
-//=============================== get all medicine names ===============================
+//=============================== get all medicine names in prescription ===============================
 export const getAllMedicineNames = async (req, res, next) => {
-  try {
-    const userId = req.authUser._id;
+  const userId = req.authUser._id;
 
-    const prescriptions = await prescriptionModel
-      .find({ patientId: userId })
-      .populate("medicineId");
+  const prescriptions = await prescriptionModel
+    .find({ patientId: userId })
+    .populate("medicineId");
 
-    const medicineInfo = prescriptions
-      .map((prescription) => {
-        return prescription.medicineId.map((medicine) => ({
-          medicineId: medicine._id,
-          medicineName: medicine.medicineName,
-        }));
-      })
-      .flat();
+  const medicineInfo = prescriptions
+    .map((prescription) => {
+      return prescription.medicineId.map((medicine) => ({
+        medicineId: medicine._id,
+        medicineName: medicine.medicineName,
+      }));
+    })
+    .flat();
 
-    res.status(200).json({ message: "Success", medicineInfo });
-  } catch (error) {
-    // If an error occurs, pass it to the error handling middleware
-    next(error);
-  }
+  res.status(200).json({ message: "Success", medicineInfo });
 };
-// ================= Prescription Required Medicines =================
 
-// export const prescriptionRequiredMedicines = async (req, res, next) => {
-//   try {
-//     const userId = req.authUser._id;
-
-//     // Find all prescriptions for the given user ID
-//     const prescriptions = await prescriptionModel.find({ patientId: userId });
-
-//     if (!prescriptions || prescriptions.length === 0) {
-//       return res.status(404).json({ message: "No prescriptions found for the user" });
-//     }
-
-//     // Initialize an array to store prescription IDs with prescriptionRequired flag
-//     const prescriptionIds = [];
-
-//     // Initialize an array to store unique medicine names
-//     const uniqueMedicineNames = [];
-
-//     // Loop through each prescription
-//     for (const prescription of prescriptions) {
-//       // Find the medicine details for the prescription
-//       const medicine = await medicineModel.findById(prescription.medicineId);
-
-//       if (medicine && medicine.prescriptionRequired) {
-//         // Add prescription ID to the array if prescriptionRequired is true
-//         prescriptionIds.push(prescription._id);
-
-//         // Add unique medicine names to the array
-//         if (!uniqueMedicineNames.includes(medicine.medicineName)) {
-//           uniqueMedicineNames.push(medicine.medicineName);
-//         }
-//       }
-//     }
-
-//     res.status(200).json({ message: "Prescription IDs with prescriptionRequired flag", prescriptionIds, uniqueMedicineNames });
-//   } catch (error) {
-//     console.error("Error detecting prescriptionRequired medicines:", error);
-//     next(new Error("Failed to detect prescriptionRequired medicines", { cause: 500 }));
-//   }
-// };
-
-
+//======================== get prescription required medicines in prescription ===============================
 export const prescriptionRequiredMedicines = async (req, res, next) => {
   try {
     const userId = req.authUser._id;
@@ -152,7 +118,9 @@ export const prescriptionRequiredMedicines = async (req, res, next) => {
     const prescriptions = await prescriptionModel.find({ patientId: userId });
 
     if (!prescriptions || prescriptions.length === 0) {
-      return res.status(404).json({ message: "No prescriptions found for the user" });
+      return res
+        .status(404)
+        .json({ message: "No prescriptions found for the user" });
     }
 
     // Initialize an array to store prescription IDs with prescriptionRequired flag
@@ -179,19 +147,27 @@ export const prescriptionRequiredMedicines = async (req, res, next) => {
           // Add the medicine data to the Medicines array
           medicineArr.push({
             medicineName: medicine.medicineName,
-            prescriptionRequired : medicine.prescriptionRequired,
-            activeIngredient : medicine.activeIngredient,
-            usageInstruction : medicine.usageInstruction, 
-            concentration : medicine.concentration,
-            sideEffects : medicine.sideEffects
+            prescriptionRequired: medicine.prescriptionRequired,
+            activeIngredient: medicine.activeIngredient,
+            usageInstruction: medicine.usageInstruction,
+            concentration: medicine.concentration,
+            sideEffects: medicine.sideEffects,
           });
         }
       }
     }
 
-    res.status(200).json({ message: "Prescription IDs with prescriptionRequired flag", prescriptionIds, medicineArr });
+    res.status(200).json({
+      message: "Prescription IDs with prescriptionRequired flag",
+      prescriptionIds,
+      medicineArr,
+    });
   } catch (error) {
     console.error("Error detecting prescriptionRequired medicines:", error);
-    next(new Error("Failed to detect prescriptionRequired medicines", { cause: 500 }));
+    next(
+      new Error("Failed to detect prescriptionRequired medicines", {
+        cause: 500,
+      })
+    );
   }
 };

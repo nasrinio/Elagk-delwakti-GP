@@ -30,6 +30,7 @@ router.get(
 
 router.get("/", isAuth(), asyncHandler(pc.getAllPrescriptions));
 
+router.delete("/", isAuth(), asyncHandler(pc.deletePrescription));
 
 
 export default router;
