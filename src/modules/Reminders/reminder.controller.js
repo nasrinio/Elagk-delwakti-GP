@@ -226,8 +226,9 @@ export const searchReminders = async (req, res, next) => {
   }
 };
 
-// !! REPORTS !! 
+// !! REPORTS !!
 //================================== generate medication adherence report ==========================
+
 export const medicationAdherenceReport = async (req, res, next) => {
   try {
     const userId = req.authUser._id;
@@ -236,85 +237,99 @@ export const medicationAdherenceReport = async (req, res, next) => {
     const prescriptions = await prescriptionModel.find({ patientId: userId });
 
     if (!prescriptions || prescriptions.length === 0) {
-      return next(new Error("No prescriptions found for the user.", { cause: 404 }));
+      return next(
+        new Error("No prescriptions found for the user.", { cause: 404 })
+      );
     }
 
     // Initialize variables for adherence calculation
-    let totalPrescriptions = prescriptions.length;
-    let adherentMedications = 0;
+    let totalReminders = 0;
+    let takenReminders = 0;
 
     // Loop through each prescription
     for (const prescription of prescriptions) {
-      // Find the corresponding reminder for the prescription
-      const reminder = await reminderModel.findOne({ prescriptionId: prescription._id });
+      // Find all reminders for this prescription
+      const reminders = await reminderModel.find({
+        prescriptionId: prescription._id,
+      });
 
-      // Check if reminder exists and isTaken is true
-      if (reminder && reminder.isTaken) {
-        adherentMedications++;
-      }
+      // Update the total reminders count
+      totalReminders += reminders.length;
+
+      // Count the number of reminders with isTaken set to true
+      const takenCount = reminders.filter(
+        (reminder) => reminder.isTaken === true
+      ).length;
+      takenReminders += takenCount;
     }
 
-    // Calculate adherence percentage
-    const adherencePercentage = (adherentMedications / totalPrescriptions) * 100;
+    // Calculate the percentage of taken reminders
+    const adherencePercentage = (takenReminders / totalReminders) * 100 || 0;
 
     return res.status(200).json({
-      totalPrescriptions,
-      adherentMedications,
+      totalReminders,
+      takenReminders,
       adherencePercentage,
     });
   } catch (error) {
-    return next(new Error(`Error generating medication adherence report: ${error.message}`));
+    return next(
+      new Error(
+        `Error generating medication adherence report: ${error.message}`
+      )
+    );
   }
 };
-
-
+//determineReminderMedicines
 //================================== determine reminder medicines ==========================
 export const determineReminderMedicines = async (req, res, next) => {
   try {
     const userId = req.authUser._id;
 
-    // Find all prescriptions for the given user ID
-    const prescriptions = await prescriptionModel.find({ patientId: userId });
+    // Find all prescriptions for the user and populate the medicineId field
+    const prescriptions = await prescriptionModel
+      .find({ patientId: userId })
+      .populate("medicineId");
 
     if (!prescriptions || prescriptions.length === 0) {
-      return next(new Error("No prescriptions found for the user.", { cause: 404 }));
+      return res.status(404).json({ message: "No prescriptions found for the user" });
     }
 
-    // Initialize arrays for storing reminder medicines and non-reminder medicines
-    let reminderMedicines = [];
-    let nonReminderMedicines = [];
+    // Initialize arrays for reminded and non-reminded medicines
+    let remindedMedicines = [];
+    let nonRemindedMedicines = [];
 
     // Loop through each prescription
     for (const prescription of prescriptions) {
-      // Find the corresponding reminder for the prescription
-      const reminder = await reminderModel.findOne({ prescriptionId: prescription._id });
+      // Check if there are reminders for this prescription
+      const reminders = await reminderModel.find({ prescriptionId: prescription._id });
 
-      // Find the medicine details for the prescription
-      const medicine = await medicineModel.findById(prescription.medicineId);
+      // Loop through each medicine in the prescription
+      for (const medicine of prescription.medicineId) {
+        // Check if there is a reminder associated with this medicine
+        const hasReminder = reminders.some(reminder => reminder.medicineId.equals(medicine._id));
 
-      // Check if a reminder exists for the prescription
-      if (reminder) {
-        reminderMedicines.push({
-          prescriptionId: prescription._id,
-          medicineId: prescription.medicineId,
-          medicineName: medicine ? medicine.medicineName : "Unknown",
-          isReminder: true,
-        });
-      } else {
-        nonReminderMedicines.push({
-          prescriptionId: prescription._id,
-          medicineId: prescription.medicineId,
-          medicineName: medicine ? medicine.medicineName : "Unknown",
-          isReminder: false,
-        });
+        // Add the medicine to the appropriate array based on whether it has a reminder
+        if (hasReminder) {
+          remindedMedicines.push({
+            medicineId: medicine._id,
+            medicineName: medicine.medicineName,
+          });
+        } else {
+          nonRemindedMedicines.push({
+            medicineId: medicine._id,
+            medicineName: medicine.medicineName,
+          });
+        }
       }
     }
 
-    return res.status(200).json({
-      reminderMedicines,
-      nonReminderMedicines,
-    });
+    // Return both arrays of reminded and non-reminded medicines
+    res.status(200).json({ message: "Success", remindedMedicines, nonRemindedMedicines });
   } catch (error) {
-    return next(new Error(`Error determining reminder medicines: ${error.message}`));
+    console.error("Error in getAllMedicineNames:", error);
+    next(error);
   }
 };
+
+
+

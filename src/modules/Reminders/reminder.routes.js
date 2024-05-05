@@ -21,13 +21,13 @@ router.post(
   //validationCoreFunction(createReminderSchema),
   asyncHandler(rc.searchReminders)
 );
-router.post(
+router.get(
   "/adherenceReport",
   isAuth(),
   asyncHandler(rc.medicationAdherenceReport)
 );
 
-router.post(
+router.get(
   "/whichRemind",
   isAuth(),
   asyncHandler(rc.determineReminderMedicines)
