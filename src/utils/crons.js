@@ -6,7 +6,7 @@ import { prescriptionModel } from "../../DB/Models/prescription.js";
 
 
 export const reminderCronJob = () => {
-  scheduleJob({ rule: "* * * * *", tz: "Africa/Cairo" }, async function () {
+  scheduleJob({ rule: "*/5 * * * *", tz: "Africa/Cairo" }, async function () {
     console.log("Reminder cron job started");
     try {
       console.log("Getting current time in Africa/Cairo...");
