@@ -109,45 +109,31 @@ export const getAllMedicineNames = async (req, res, next) => {
   res.status(200).json({ message: "Success", medicineInfo });
 };
 
-//======================== get prescription required medicines in prescription ===============================
 export const prescriptionRequiredMedicines = async (req, res, next) => {
-  try {
-    const userId = req.authUser._id;
+  const userId = req.authUser._id;
 
+  try {
     // Find all prescriptions for the given user ID
     const prescriptions = await prescriptionModel.find({ patientId: userId });
 
     if (!prescriptions || prescriptions.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No prescriptions found for the user" });
+      return res.status(404).json({ message: "No prescriptions found for the user." });
     }
 
-    // Initialize an array to store prescription IDs with prescriptionRequired flag
-    const prescriptionIds = [];
-
-    // Initialize an array to store unique medicine names with prescriptionRequired = true
-    const medicineArr = [];
+    // Initialize an array to store medicines with prescriptionRequired = true
+    const prescriptionRequiredMedicines = [];
 
     // Loop through each prescription
     for (const prescription of prescriptions) {
-      // Find the medicine details for the prescription
-      const medicine = await medicineModel.findById(prescription.medicineId);
+      // Find the medicine details for each medicine in the prescription
+      for (const medicineId of prescription.medicineId) {
+        const medicine = await medicineModel.findById(medicineId);
 
-      if (medicine && medicine.prescriptionRequired) {
-        // Add prescription ID to the array if prescriptionRequired is true
-        prescriptionIds.push(prescription._id);
-
-        // Check if the medicine name is already in the Medicines array
-        const existingMedicineIndex = medicineArr.findIndex(
-          (item) => item.medicineName === medicine.medicineName
-        );
-
-        if (existingMedicineIndex === -1) {
-          // Add the medicine data to the Medicines array
-          medicineArr.push({
+        if (medicine && medicine.prescriptionRequired) {
+          // Add the medicine data to the prescriptionRequiredMedicines array
+          prescriptionRequiredMedicines.push({
+            medicineId: medicine._id,
             medicineName: medicine.medicineName,
-            prescriptionRequired: medicine.prescriptionRequired,
             activeIngredient: medicine.activeIngredient,
             usageInstruction: medicine.usageInstruction,
             concentration: medicine.concentration,
@@ -158,16 +144,11 @@ export const prescriptionRequiredMedicines = async (req, res, next) => {
     }
 
     res.status(200).json({
-      message: "Prescription IDs with prescriptionRequired flag",
-      prescriptionIds,
-      medicineArr,
+      message: "Medicines with prescriptionRequired flag",
+      prescriptionRequiredMedicines,
     });
   } catch (error) {
-    console.error("Error detecting prescriptionRequired medicines:", error);
-    next(
-      new Error("Failed to detect prescriptionRequired medicines", {
-        cause: 500,
-      })
-    );
+    console.error("Error getting prescriptionRequired medicines:", error);
+    next(new Error("Failed to get prescriptionRequired medicines"));
   }
 };
