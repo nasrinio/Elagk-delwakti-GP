@@ -42,7 +42,7 @@ export const reminderCronJob = () => {
 
           // Update the reminder status or perform any other necessary actions
           console.log("Updating reminder status...");
-          reminder.isTaken = true;
+          //reminder.isTaken = true;
           await reminder.save();
           console.log("Reminder updated");
         }
