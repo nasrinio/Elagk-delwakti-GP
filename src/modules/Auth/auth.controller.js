@@ -140,7 +140,7 @@ export const logIn = async (req, res, next) => {
 
 //=============================== Log Out ===============================
 export const logOut = async (req, res, next) => {
-  const { _id } = req.authUser;
+  const { _id } = req.authUser._id;
   const user = await userModel.findOneAndUpdate(
     { _id },
     {

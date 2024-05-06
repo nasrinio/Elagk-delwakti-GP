@@ -17,4 +17,5 @@ router.post("/login", asyncHandler(ac.logIn));
 router.post("/forget", asyncHandler(ac.forgetPassword));
 router.post("/reset/:token", asyncHandler(ac.resetPassword));
 router.get("/profile", isAuth(), asyncHandler(ac.profile));
+router.get("/logOut", isAuth(), asyncHandler(ac.logOut));
 export default router;
