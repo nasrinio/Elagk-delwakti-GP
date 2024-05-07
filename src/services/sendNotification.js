@@ -2,6 +2,7 @@ import { medicineModel } from "../../DB/Models/medicine.model.js";
 import { reminderModel } from "../../DB/Models/reminder.model.js";
 import { userModel } from "../../DB/Models/user.model.js";
 import { sendEmailService } from "./sendEmailService.js";
+import { reminderTemplate } from "../utils/reminderTemplate.js";
 
 export async function sendNotification(userId, reminderId) {
   try {
@@ -32,12 +33,13 @@ export async function sendNotification(userId, reminderId) {
     }
 
     // Send the notification using the email service
-    const emailSent = await sendEmailService({
-        to: user.email,
-        subject: "Reminder Notification",
-        message: `Reminder: ${reminder.reminderMsg} \nMedicine: ${medicine.medicineName}`
-          // Include medicineName in the notification message
-      });
+    const emailSent = sendEmailService({
+      to: user.email,
+      subject: "Reminder Notification",
+      message: reminderTemplate({
+        subject: medicine.medicineName,
+      }),
+    });
     if (!emailSent) {
       throw new Error("Failed to send notification email");
     }
