@@ -1,0 +1,54 @@
+  {medicationAdherenceData && (
+              <>
+                <Progress.Circle
+                  size={175}
+                  indeterminate={false}
+                  progress={displayedPercentage / 100} // Convert displayed percentage to a value between 0 and 1
+                  showsText={true}
+                  formatText={() => `${displayedPercentage.toFixed(2)}%`}
+                  indeterminateAnimationDuration={1000}
+                  thickness={16}
+                  color={"white"}
+                />
+                <Text style={styles.reporttext}>Adherence Percentage</Text>
+                <Text style={styles.reporttext}>
+                  Total Prescriptions:{" "}
+                  {medicationAdherenceData.totalPrescriptions}
+                </Text>
+                <Text style={styles.reporttext}>
+                  Adherent Medications:{" "}
+                  {medicationAdherenceData.adherentMedications}
+                </Text>
+              </>
+            )}
+
+
+            make a loading like this
+
+
+              {profileInformation ? (
+            <>
+              <Text
+                style={{ color: "#105FD3", fontWeight: "bold", fontSize: 20 }}
+              >
+                Welcome, {profileInformation.userName}!
+              </Text>
+              <Image
+                style={{
+                  alignSelf: "center",
+                  width: 70,
+                  height: 70,
+                  marginTop: 10,
+                  borderRadius: 100,
+                }}
+                source={{ uri: profileInformation.profilePicture.secure_url }} // Assuming there's an avatar URL in the profile data
+              />
+            </>
+          ) : (
+            <HStack space={2} justifyContent="center">
+              <Spinner accessibilityLabel="Loading posts" />
+              <Heading color="primary.500" fontSize="md">
+                Loading
+              </Heading>
+            </HStack>
+          )}
